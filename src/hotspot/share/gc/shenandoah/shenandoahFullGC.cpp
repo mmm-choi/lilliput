@@ -1036,6 +1036,11 @@ void ShenandoahFullGC::compact_humongous_objects() {
 
       oop new_obj = cast_to_oop(heap->get_region(new_start)->bottom());
       new_obj->reinit_mark();
+      // Freeze the identity hash into the relocated object, just like the
+      // regular-object compaction path does. Without this, a hashed-but-not-
+      // expanded (hashctrl 0b01) humongous object keeps recomputing its hash
+      // from its (now changed) address, returning inconsistent identity hashes.
+      new_obj->initialize_hash_if_necessary(cast_to_oop(r->bottom()));
 
       {
         ShenandoahAffiliation original_affiliation = r->affiliation();
